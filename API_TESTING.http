@@ -1,0 +1,134 @@
+### Testing de API - ControlBook
+
+## Usar con REST Client (VS Code)
+Extensión: REST Client by Huachao Mao
+
+---
+
+### ✅ 1. LOGIN
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@controlbook.es",
+  "password": "admin123"
+}
+
+# Guarda el token para usar en requests siguientes
+
+---
+
+### 📚 2. GET ALL CLASSES
+GET http://localhost:3001/api/classes
+Authorization: Bearer YOUR_TOKEN_HERE
+
+---
+
+### ➕ 3. CREATE CLASS
+POST http://localhost:3001/api/classes
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "name": "Danza Street",
+  "description": "Clase de danza urbana",
+  "time": "10:00 - 12:00",
+  "location": "Aula 5",
+  "emoji": "🎭"
+}
+
+---
+
+### 👥 4. GET STUDENTS
+GET http://localhost:3001/api/students?classId=1
+Authorization: Bearer YOUR_TOKEN_HERE
+
+---
+
+### ➕ 5. CREATE STUDENT
+POST http://localhost:3001/api/students
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "name": "María García",
+  "email": "maria@example.com",
+  "team": "producción",
+  "notes": "Muy participativa",
+  "classId": 1
+}
+
+---
+
+### ✅ 6. GET ATTENDANCE
+GET http://localhost:3001/api/attendance?classId=1&date=2026-03-09
+Authorization: Bearer YOUR_TOKEN_HERE
+
+---
+
+### ✏️ 7. CREATE ATTENDANCE
+POST http://localhost:3001/api/attendance
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "studentId": 1,
+  "classId": 1,
+  "date": "2026-03-09",
+  "time": "10:05",
+  "status": "present",
+  "notes": "Asistencia normal",
+  "hasJustification": false,
+  "justificationFile": null
+}
+
+### Status values: "present" | "absent" | "justified"
+
+---
+
+### 📊 8. GET REPORTS
+GET http://localhost:3001/api/reports?classId=1&from=2026-01-01&to=2026-03-09
+Authorization: Bearer YOUR_TOKEN_HERE
+
+---
+
+### 📈 9. GET STATS
+GET http://localhost:3001/api/stats
+Authorization: Bearer YOUR_TOKEN_HERE
+
+---
+
+### 🏥 10. HEALTH CHECK
+GET http://localhost:3001/health
+
+---
+
+## 🔑 Obtener Token
+
+1. Ejecuta el request de LOGIN
+2. Copia el campo "token" de la respuesta
+3. Reemplaza YOUR_TOKEN_HERE en los requests
+
+Ejemplo:
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+---
+
+## 💡 Tips
+
+- Usa variables para simplificar:
+  @token = <token_value>
+  
+- Los requests se pueden ejecutar uno por uno
+- Verifica que el backend esté corriendo en :3001
+- Todos los requests POST/PUT deben tener JWT
+
+---
+
+## 🔗 Base URL
+
+Local: http://localhost:3001  
+Production: https://controlbook-backend.up.railway.app
+
