@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabase';
 
 export default function FichajePage() {
   const [loading, setLoading] = useState(false);
@@ -10,6 +11,35 @@ export default function FichajePage() {
     e.preventDefault();
     console.log("Fichando a:", nombre);
     // Aquí irá la lógica de Supabase para guardar el fichaje
+    // Importa supabase en FichajePage.jsx
+ 
+
+// Dentro de tu componente FichajePage
+const handleFichar = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+
+  const { error } = await supabase
+    .from('fichajes')
+    .insert([
+      {
+        nombre: nombre, // Asegúrate de que este estado existe
+        equipo: 'Producción', // Por ahora fijo, luego lo haremos dinámico
+        fecha: new Date().toISOString().split('T')[0],
+        hora_entrada: new Date().toLocaleTimeString('es-ES', { hour12: false }),
+        absentismo: false
+      }
+    ]);
+
+  if (error) {
+    console.error("Error al guardar en Supabase:", error);
+    alert("Error: " + error.message);
+  } else {
+    alert("¡Fichaje registrado con éxito!");
+    setNombre(''); // Limpiar el input
+  }
+  setLoading(false);
+};
   };
 
   return (
