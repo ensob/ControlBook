@@ -9,6 +9,7 @@ export const useAuthStore = create((set) => ({
   error: null,
 
   login: async (email, password) => {
+    console.log("intentando login con Supabase...");
     set({ isLoading: true, error: null })
     try {
       // USAMOS SUPABASE EN LUGAR DE FETCH
