@@ -1,126 +1,65 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect } from 'react'
-import { useAuthStore } from './context/store'
+import { useState } from 'react'
 
-// Pages
-import LoginPage from './pages/LoginPage'
-import DashboardPage from './pages/DashboardPage'
-import StudentsManagementPage from './pages/StudentsManagementPage'
-import ClassesPage from './pages/ClassesPage'
-import StudentPage from './pages/StudentPage'
-import AttendancePage from './pages/AttendancePage'
-import ReportsPage from './pages/ReportsPage'
-import SettingsPage from './pages/SettingsPage'
-
-// Components
-import Layout from './components/Layout'
-
-export default function App() {
-  const { isAuthenticated, token } = useAuthStore()
-
-  useEffect(() => {
-    // Verificar token al cargar
-    if (token) {
-      // Aquí se puede validar el token en el backend
-    }
-  }, [token])
+function App() {
+  const [loading, setLoading] = useState(false);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        
-        <Route
-          path="/"
-          element={
-            isAuthenticated ? (
-              <Layout>
-                <DashboardPage />
-              </Layout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+    <div className="min-h-screen bg-urban-asfalto text-white p-4 md:p-8 font-sans">
+      {/* Header Estilo Street */}
+      <header className="max-w-md mx-auto mb-10 text-center">
+        <h1 className="text-4xl font-black italic tracking-tighter">
+          CONTROL<span className="text-urban-naranja underline decoration-2 underline-offset-4">BOOK</span>
+        </h1>
+        <p className="text-gray-500 text-xs uppercase tracking-[0.2em] mt-2 font-bold">Dance Studio Management</p>
+      </header>
 
-        <Route
-          path="/alumnos"
-          element={
-            isAuthenticated ? (
-              <Layout>
-                <StudentsManagementPage />
-              </Layout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+      {/* Formulario Principal */}
+      <div className="max-w-md mx-auto bg-urban-grisCard p-8 rounded-[2.5rem] border border-white/5 shadow-2xl">
+        <form className="space-y-6">
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Nombre Completo</label>
+            <input 
+              type="text" 
+              className="w-full bg-urban-asfalto border-none rounded-2xl py-4 px-5 focus:ring-2 focus:ring-urban-naranja transition-all placeholder:text-gray-700" 
+              placeholder="Ej. Alex Smith"
+            />
+          </div>
 
-        <Route
-          path="/classes"
-          element={
-            isAuthenticated ? (
-              <Layout>
-                <ClassesPage />
-              </Layout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+          <div className="grid grid-cols-1 gap-4">
+            <label className="block text-xs font-bold text-gray-400 uppercase -mb-2 ml-1">Equipo / Área</label>
+            <div className="flex gap-2">
+              {['Producción', 'Realización', 'DJ'].map((item) => (
+                <button 
+                  key={item}
+                  type="button"
+                  className="flex-1 py-3 rounded-xl border-2 border-white/5 bg-urban-asfalto text-[10px] font-black uppercase hover:border-urban-naranja hover:text-urban-naranja transition-all"
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <Route
-          path="/classes/:classId/students"
-          element={
-            isAuthenticated ? (
-              <Layout>
-                <StudentPage />
-              </Layout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+          <div className="flex items-center justify-between bg-urban-asfalto p-4 rounded-2xl border border-white/5">
+            <span className="text-sm font-bold">¿Reportar Absentismo?</span>
+            <input type="checkbox" className="w-6 h-6 accent-urban-naranja" />
+          </div>
 
-        <Route
-          path="/classes/:classId/attendance"
-          element={
-            isAuthenticated ? (
-              <Layout>
-                <AttendancePage />
-              </Layout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+          <button 
+            className="w-full bg-urban-naranja hover:bg-urban-naranjaHover text-black font-black py-5 rounded-2xl text-xl transition-all active:scale-95 shadow-[0_10px_30px_rgba(255,95,31,0.2)]"
+            disabled={loading}
+          >
+            {loading ? 'PROCESANDO...' : 'FICHAR AHORA'}
+          </button>
+        </form>
+      </div>
 
-        <Route
-          path="/reports"
-          element={
-            isAuthenticated ? (
-              <Layout>
-                <ReportsPage />
-              </Layout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-
-        <Route
-          path="/settings"
-          element={
-            isAuthenticated ? (
-              <Layout>
-                <SettingsPage />
-              </Layout>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+      <footer className="mt-12 text-center text-gray-600 text-[10px] uppercase font-bold tracking-widest">
+        &copy; 2026 Controlbook Urban Tech for Xielti by Yoocit
+      </footer>
+    </div>
   )
 }
+
+export default App
+

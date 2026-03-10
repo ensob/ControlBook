@@ -1,28 +1,27 @@
 import { create } from 'zustand'
+import { supabase } from '../supabase' // Importamos el cerebro que creamos
 
 export const useAuthStore = create((set) => ({
   user: null,
-  token: localStorage.getItem('token') || null,
-  isAuthenticated: !!localStorage.getItem('token'),
+  session: null,
+  isAuthenticated: false,
   isLoading: false,
   error: null,
 
   login: async (email, password) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      // USAMOS SUPABASE EN LUGAR DE FETCH
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       })
-      
-      if (!response.ok) throw new Error('Error de autenticación')
-      
-      const data = await response.json()
-      localStorage.setItem('token', data.token)
+
+      if (error) throw error
+
       set({ 
         user: data.user, 
-        token: data.token, 
+        session: data.session,
         isAuthenticated: true,
         isLoading: false 
       })
@@ -33,173 +32,72 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('token')
-    set({ user: null, token: null, isAuthenticated: false })
+  logout: async () => {
+    await supabase.auth.signOut()
+    set({ user: null, session: null, isAuthenticated: false })
   },
 
-  setUser: (user) => set({ user })
+  setUser: (user) => set({ user, isAuthenticated: !!user })
 }))
 
+// TIENDA DE CLASES (EQUIPOS)
 export const useClassStore = create((set) => ({
   classes: [],
   currentClass: null,
   isLoading: false,
 
-  fetchClasses: async (token) => {
+  fetchClasses: async () => {
     set({ isLoading: true })
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/classes`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await response.json()
+      const { data, error } = await supabase
+        .from('equipos') // Nombre de tu tabla en Supabase
+        .select('*')
+      
+      if (error) throw error
       set({ classes: data, isLoading: false })
     } catch (error) {
+      console.error('Error fetching classes:', error)
       set({ isLoading: false })
     }
   },
 
   setCurrentClass: (classData) => set({ currentClass: classData }),
-  addClass: async (classData, token) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/classes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(classData)
-      })
-      const newClass = await response.json()
-      set((state) => ({ classes: [...state.classes, newClass] }))
-      return newClass
-    } catch (error) {
-      console.error('Error adding class:', error)
-    }
-  }
 }))
 
-export const useStudentStore = create((set) => ({
-  students: [],
-  isLoading: false,
-
-  fetchStudents: async (classId, token) => {
-    set({ isLoading: true })
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/students?classId=${classId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await response.json()
-      set({ students: data, isLoading: false })
-    } catch (error) {
-      set({ isLoading: false })
-    }
-  },
-
-  addStudent: async (student, classId, token) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/students`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ ...student, classId })
-      })
-      const newStudent = await response.json()
-      set((state) => ({ students: [...state.students, newStudent] }))
-      return newStudent
-    } catch (error) {
-      console.error('Error adding student:', error)
-    }
-  },
-
-  updateStudent: async (id, updates, token) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/students/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updates)
-      })
-      const updated = await response.json()
-      set((state) => ({
-        students: state.students.map(s => s.id === id ? updated : s)
-      }))
-    } catch (error) {
-      console.error('Error updating student:', error)
-    }
-  },
-
-  deleteStudent: async (id, token) => {
-    try {
-      await fetch(`${import.meta.env.VITE_API_URL}/students/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      set((state) => ({
-        students: state.students.filter(s => s.id !== id)
-      }))
-    } catch (error) {
-      console.error('Error deleting student:', error)
-    }
-  }
-}))
-
+// TIENDA DE ASISTENCIA
 export const useAttendanceStore = create((set) => ({
   attendance: [],
   isLoading: false,
 
-  fetchAttendance: async (classId, date, token) => {
+  checkIn: async (fichajeData) => {
+    try {
+      const { data, error } = await supabase
+        .from('fichajes')
+        .insert([fichajeData])
+        .select()
+      
+      if (error) throw error
+      set((state) => ({ attendance: [...state.attendance, data[0]] }))
+      return data[0]
+    } catch (error) {
+      console.error('Error in checkIn:', error)
+      return null
+    }
+  },
+
+  fetchAttendance: async (date) => {
     set({ isLoading: true })
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/attendance?classId=${classId}&date=${date}`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      )
-      const data = await response.json()
+      const { data, error } = await supabase
+        .from('fichajes')
+        .select('*')
+        .eq('fecha', date)
+      
+      if (error) throw error
       set({ attendance: data, isLoading: false })
     } catch (error) {
       set({ isLoading: false })
     }
-  },
-
-  checkIn: async (studentId, data, token) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/attendance`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ studentId, ...data })
-      })
-      const record = await response.json()
-      set((state) => ({ attendance: [...state.attendance, record] }))
-      return record
-    } catch (error) {
-      console.error('Error checking in:', error)
-    }
-  },
-
-  updateAttendance: async (id, updates, token) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/attendance/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updates)
-      })
-      const updated = await response.json()
-      set((state) => ({
-        attendance: state.attendance.map(a => a.id === id ? updated : a)
-      }))
-    } catch (error) {
-      console.error('Error updating attendance:', error)
-    }
   }
 }))
+

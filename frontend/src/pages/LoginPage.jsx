@@ -51,7 +51,7 @@ export default function LoginPage() {
               📖
             </motion.div>
             <h1 className="text-4xl font-black gradient-orange bg-clip-text text-transparent">
-              ControlBook
+              ControlBook v1.0
             </h1>
             <p className="text-gray-600 mt-2">Sistema de Control de Asistencia</p>
           </div>

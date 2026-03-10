@@ -42,7 +42,7 @@
 
 ```bash
 # Clonar repositorio
-git clone https://github.com/TU_USUARIO/controlbook.git
+git clone https://github.com/ensob/controlbook.git
 cd controlbook
 
 # Setup Backend
@@ -63,7 +63,7 @@ Accede a: **http://localhost:5173**
 ### 📝 Credenciales de Demo
 ```
 Email: admin@controlbook.es
-Password: admin123
+Password: admin-123
 ```
 
 ## 🏗️ Estructura del Proyecto
@@ -187,11 +187,11 @@ Este proyecto está bajo la Licencia MIT - ver [LICENSE](LICENSE) para más deta
 - 📧 Email: support@controlbook.es
 - 💬 Discord: [Join Server](https://discord.gg/controlbook)
 - 📖 Wiki: [docs.controlbook.es](https://docs.controlbook.es)
-- 🐛 Issues: [GitHub Issues](https://github.com/TU_USUARIO/controlbook/issues)
+- 🐛 Issues: [GitHub Issues](https://github.com/ensob/controlbook/issues)
 
 ## 👨‍💻 Autor
 
-**Desarrollador ControlBook**  
+**Desarrollador YoocitMegacorp**  
 Especialista en WebApps de clase mundial 🏆
 
 ## 🙏 Agradecimientos
