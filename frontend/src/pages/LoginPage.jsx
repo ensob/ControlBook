@@ -20,7 +20,7 @@ export default function LoginPage() {
     setIsLoading(false)
 
     if (success) {
-      navigate('/')
+      navigate('/dashboard')
     } else {
       setError('Credenciales inválidas o acceso denegado')
     }
