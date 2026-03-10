@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,9 +7,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // AQUÍ ESTÁ EL TRUCO: Define tus colores personalizados
         primary: {
-          500: '#f97316', // Pon aquí el color naranja que prefieras
+          500: '#d9742b',
           600: '#ea580c',
         },
         'accent-orange': '#fb923c',
