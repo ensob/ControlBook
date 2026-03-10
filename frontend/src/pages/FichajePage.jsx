@@ -1,45 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 
 export default function FichajePage() {
   const [loading, setLoading] = useState(false);
-  const [nombre, setNombre] = useState('');
+  const [alumnos, setAlumnos] = useState([]);
+  const [selectedAlumno, setSelectedAlumno] = useState('');
   const navigate = useNavigate();
 
-  const handleFichar = (e) => {
-    e.preventDefault();
-    console.log("Fichando a:", nombre);
-    // Aquí irá la lógica de Supabase para guardar el fichaje
-    // Importa supabase en FichajePage.jsx
- 
-
-// Dentro de tu componente FichajePage
-const handleFichar = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-
-  const { error } = await supabase
-    .from('fichajes')
-    .insert([
-      {
-        nombre: nombre, // Asegúrate de que este estado existe
-        equipo: 'Producción', // Por ahora fijo, luego lo haremos dinámico
-        fecha: new Date().toISOString().split('T')[0],
-        hora_entrada: new Date().toLocaleTimeString('es-ES', { hour12: false }),
-        absentismo: false
+  useEffect(() => {
+    const fetchAlumnos = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('alumnos')
+          .select('*');
+        if (error) throw error;
+        setAlumnos(data);
+      } catch (error) {
+        console.error('Error fetching alumnos:', error);
       }
-    ]);
+    };
+    fetchAlumnos();
+  }, []);
 
-  if (error) {
-    console.error("Error al guardar en Supabase:", error);
-    alert("Error: " + error.message);
-  } else {
-    alert("¡Fichaje registrado con éxito!");
-    setNombre(''); // Limpiar el input
-  }
-  setLoading(false);
-};
+  const handleFichar = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const { error } = await supabase
+      .from('fichajes')
+      .insert([
+        {
+          nombre: selectedAlumno,
+          equipo: 'Producción', // Por ahora fijo, luego lo haremos dinámico
+          fecha: new Date().toISOString().split('T')[0],
+          hora_entrada: new Date().toLocaleTimeString('es-ES', { hour12: false }),
+          absentismo: false
+        }
+      ]);
+
+    if (error) {
+      console.error("Error al guardar en Supabase:", error);
+      alert("Error: " + error.message);
+    } else {
+      alert("¡Fichaje registrado con éxito!");
+      setSelectedAlumno(''); // Limpiar el select
+    }
+    setLoading(false);
   };
 
   return (
@@ -57,16 +64,21 @@ const handleFichar = async (e) => {
         <form onSubmit={handleFichar} className="space-y-6">
           <div>
             <label className="block text-xs font-bold text-gray-300 uppercase mb-2 ml-1">
-              Nombre Completo
+              Seleccionar Alumno
             </label>
-            <input 
-              type="text" 
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+            <select 
+              value={selectedAlumno}
+              onChange={(e) => setSelectedAlumno(e.target.value)}
               className="w-full bg-[#2a2a2a] border border-gray-600 rounded-2xl py-4 px-5 text-white focus:ring-2 focus:ring-orange-500 outline-none" 
-              placeholder="Ej. Alex Smith"
               required
-            />
+            >
+              <option value="">Selecciona un alumno</option>
+              {alumnos.map((alumno) => (
+                <option key={alumno.id} value={alumno.nombre_completo || alumno.nombre}>
+                  {alumno.nombre_completo || alumno.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button 
