@@ -20,7 +20,7 @@ export default function StudentPage() {
 
   useEffect(() => {
     if (token && classId) fetchStudents(classId, token)
-  }, [token, classId])
+  }, [token, classId, fetchStudents])
 
   const resetForm = () => {
     setFormData({ name: '', email: '', password: '', team: 'producción', notes: '' })

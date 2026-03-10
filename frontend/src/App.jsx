@@ -13,7 +13,6 @@ import ReportsPage from './pages/ReportsPage'
 import SettingsPage from './pages/SettingsPage'
 
 // Components
-import PrivateRoute from './components/PrivateRoute'
 import Layout from './components/Layout'
 
 export default function App() {

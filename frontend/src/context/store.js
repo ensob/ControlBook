@@ -10,7 +10,7 @@ export const useAuthStore = create((set) => ({
   login: async (email, password) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -49,7 +49,7 @@ export const useClassStore = create((set) => ({
   fetchClasses: async (token) => {
     set({ isLoading: true })
     try {
-      const response = await fetch('/api/classes', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/classes`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -62,7 +62,7 @@ export const useClassStore = create((set) => ({
   setCurrentClass: (classData) => set({ currentClass: classData }),
   addClass: async (classData, token) => {
     try {
-      const response = await fetch('/api/classes', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/classes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ export const useStudentStore = create((set) => ({
   fetchStudents: async (classId, token) => {
     set({ isLoading: true })
     try {
-      const response = await fetch(`/api/students?classId=${classId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/students?classId=${classId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -98,7 +98,7 @@ export const useStudentStore = create((set) => ({
 
   addStudent: async (student, classId, token) => {
     try {
-      const response = await fetch('/api/students', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/students`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +116,7 @@ export const useStudentStore = create((set) => ({
 
   updateStudent: async (id, updates, token) => {
     try {
-      const response = await fetch(`/api/students/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/students/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ export const useStudentStore = create((set) => ({
 
   deleteStudent: async (id, token) => {
     try {
-      await fetch(`/api/students/${id}`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/students/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -156,7 +156,7 @@ export const useAttendanceStore = create((set) => ({
     set({ isLoading: true })
     try {
       const response = await fetch(
-        `/api/attendance?classId=${classId}&date=${date}`,
+        `${import.meta.env.VITE_API_URL}/attendance?classId=${classId}&date=${date}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       )
       const data = await response.json()
@@ -168,7 +168,7 @@ export const useAttendanceStore = create((set) => ({
 
   checkIn: async (studentId, data, token) => {
     try {
-      const response = await fetch('/api/attendance', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/attendance`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -186,7 +186,7 @@ export const useAttendanceStore = create((set) => ({
 
   updateAttendance: async (id, updates, token) => {
     try {
-      const response = await fetch(`/api/attendance/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/attendance/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

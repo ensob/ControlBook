@@ -17,3 +17,6 @@ yarn-error.log*
 .history/
 coverage/
 .nyc_output/
+controlbook.db*
+backend/.env
+frontend/.env

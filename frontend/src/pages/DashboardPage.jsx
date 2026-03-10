@@ -15,23 +15,23 @@ export default function DashboardPage() {
   })
 
   useEffect(() => {
+    const fetchStats = async () => {
+      try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        const data = await response.json()
+        setStats(data)
+      } catch (error) {
+        console.error('Error fetching stats:', error)
+      }
+    }
+
     if (token) {
       fetchClasses(token)
       fetchStats()
     }
-  }, [token])
-
-  const fetchStats = async () => {
-    try {
-      const response = await fetch('/api/stats', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await response.json()
-      setStats(data)
-    } catch (error) {
-      console.error('Error fetching stats:', error)
-    }
-  }
+  }, [token, fetchClasses])
 
   const today = format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })
 

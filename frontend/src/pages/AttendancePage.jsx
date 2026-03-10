@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore, useStudentStore, useAttendanceStore } from '../context/store'
 import { motion } from 'framer-motion'
@@ -10,8 +10,6 @@ export default function AttendancePage() {
   const { students, fetchStudents } = useStudentStore()
   const { attendance, fetchAttendance, checkIn } = useAttendanceStore()
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [checkedInStudents, setCheckedInStudents] = useState(new Set())
-  const [absentStudents, setAbsentStudents] = useState(new Set())
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -19,17 +17,22 @@ export default function AttendancePage() {
       fetchStudents(classId, token)
       fetchAttendance(classId, selectedDate, token)
     }
-  }, [token, classId, selectedDate])
+  }, [token, classId, selectedDate, fetchAttendance, fetchStudents])
 
-  useEffect(() => {
+  const checkedInStudents = useMemo(() => {
     const checked = new Set()
-    const absent = new Set()
     attendance.forEach(record => {
       if (record.status === 'present') checked.add(record.studentId)
+    })
+    return checked
+  }, [attendance])
+
+  const absentStudents = useMemo(() => {
+    const absent = new Set()
+    attendance.forEach(record => {
       if (record.status === 'absent') absent.add(record.studentId)
     })
-    setCheckedInStudents(checked)
-    setAbsentStudents(absent)
+    return absent
   }, [attendance])
 
   const handleCheckIn = async (studentId, status) => {
@@ -45,22 +48,6 @@ export default function AttendancePage() {
     }
     
     await checkIn(studentId, data, token)
-    
-    if (status === 'present') {
-      setCheckedInStudents(prev => new Set(prev).add(studentId))
-      setAbsentStudents(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(studentId)
-        return newSet
-      })
-    } else {
-      setAbsentStudents(prev => new Set(prev).add(studentId))
-      setCheckedInStudents(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(studentId)
-        return newSet
-      })
-    }
   }
 
   return (

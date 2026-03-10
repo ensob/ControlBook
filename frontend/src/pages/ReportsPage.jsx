@@ -15,23 +15,23 @@ export default function ReportsPage() {
   const [toDate, setToDate] = useState(new Date().toISOString().split('T')[0])
 
   useEffect(() => {
+    const fetchReport = async (classId) => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/reports?classId=${classId}&from=${fromDate}&to=${toDate}`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        )
+        const data = await response.json()
+        setReportData(data)
+      } catch (error) {
+        console.error('Error fetching report:', error)
+      }
+    }
+
     if (selectedClass && token) {
       fetchReport(selectedClass.id)
     }
   }, [selectedClass, token, fromDate, toDate])
-
-  const fetchReport = async (classId) => {
-    try {
-      const response = await fetch(
-        `/api/reports?classId=${classId}&from=${fromDate}&to=${toDate}`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      )
-      const data = await response.json()
-      setReportData(data)
-    } catch (error) {
-      console.error('Error fetching report:', error)
-    }
-  }
 
   return (
     <div className="space-y-8">

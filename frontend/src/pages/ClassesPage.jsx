@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuthStore } from '../context/store'
 import { motion } from 'framer-motion'
 
@@ -15,15 +15,11 @@ export default function ClassesPage() {
 
   const emojis = ['🎬', '🎥', '🎵', '📋', '🎨', '🎭', '🎪', '🎸', '🎤', '📸', '🎞️', '🎹']
 
-  useEffect(() => {
-    fetchAreas()
-  }, [token])
-
-  const fetchAreas = async () => {
+  const fetchAreas = useCallback(async () => {
     if (!token) return
     try {
       setLoading(true)
-      const res = await fetch('/api/areas', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/areas`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -35,7 +31,11 @@ export default function ClassesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [token])
+
+  useEffect(() => {
+    fetchAreas()
+  }, [fetchAreas])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -43,7 +43,7 @@ export default function ClassesPage() {
 
     try {
       const method = editingId ? 'PUT' : 'POST'
-      const endpoint = editingId ? `/api/areas/${editingId}` : '/api/areas'
+      const endpoint = editingId ? `${import.meta.env.VITE_API_URL}/areas/${editingId}` : `${import.meta.env.VITE_API_URL}/areas`
 
       const res = await fetch(endpoint, {
         method,
@@ -73,7 +73,7 @@ export default function ClassesPage() {
     if (!window.confirm('¿Estás seguro de que quieres eliminar esta área?')) return
 
     try {
-      const res = await fetch(`/api/areas/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/areas/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })

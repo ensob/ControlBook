@@ -23,7 +23,7 @@ app.use(cors({
   credentials: true
 }))
 app.use(express.json())
-app.use(express.urlencoded({ limit: '50mb', extended: true }))
+app.use(express.urlencoded({ limit: '10mb', extended: true }))
 
 // Health Check
 app.get('/health', (req, res) => {
@@ -31,7 +31,7 @@ app.get('/health', (req, res) => {
 })
 
 // Routes
-app.use('/auth', authRoutes)
+app.use('/api/auth', authRoutes)
 app.use('/api/classes', classRoutes)
 app.use('/api/areas', areasRoutes)
 app.use('/api/students', studentRoutes)

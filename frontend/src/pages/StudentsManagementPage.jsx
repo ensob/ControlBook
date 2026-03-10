@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuthStore } from '../context/store'
 import { motion } from 'framer-motion'
 
@@ -25,15 +25,11 @@ export default function StudentsManagementPage() {
     { value: 'dj', label: '🎵 DJ', icon: '🎵' }
   ]
 
-  useEffect(() => {
-    fetchStudents()
-  }, [token])
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     if (!token) return
     try {
       setLoading(true)
-      const res = await fetch('/api/students/all', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/students/all`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -45,7 +41,11 @@ export default function StudentsManagementPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [token])
+
+  useEffect(() => {
+    fetchStudents()
+  }, [fetchStudents])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -53,7 +53,7 @@ export default function StudentsManagementPage() {
 
     try {
       const method = editingId ? 'PUT' : 'POST'
-      const endpoint = editingId ? `/api/students/${editingId}` : '/api/students'
+      const endpoint = editingId ? `${import.meta.env.VITE_API_URL}/students/${editingId}` : `${import.meta.env.VITE_API_URL}/students`
 
       // Crear payload sin classId para ruta global
       const payload = {
@@ -103,7 +103,7 @@ export default function StudentsManagementPage() {
     if (!window.confirm('¿Estás seguro de que quieres eliminar este alumno?')) return
 
     try {
-      const res = await fetch(`/api/students/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/students/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })

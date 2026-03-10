@@ -152,7 +152,7 @@ export const initializeDatabase = async () => {
     `)
 
     // Create demo user if doesn't exist
-    const hashedPassword = await bcryptjs.hash('123456', 10)
+    const hashedPassword = await bcryptjs.hash('admin123', 10)
     const stmt = db.prepare(`
       INSERT OR IGNORE INTO users (name, email, password, role) 
       VALUES (?, ?, ?, ?)

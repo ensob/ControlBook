@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../context/store'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
+import PropTypes from 'prop-types'
 
 export default function Layout({ children }) {
   const { logout, user } = useAuthStore()
@@ -123,4 +124,8 @@ export default function Layout({ children }) {
       </footer>
     </div>
   )
+}
+
+Layout.propTypes = {
+  children: PropTypes.node.isRequired,
 }
