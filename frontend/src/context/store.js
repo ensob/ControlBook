@@ -8,18 +8,16 @@ export const useAuthStore = create((set) => ({
   isLoading: false,
   error: null,
 
-  login: async (email, password) => {
-    console.log("intentando login con Supabase...");
+  login:async (email, password) => {
+    console.log("🔍 Intentando conectar a Supabase con:", { email, password });
     set({ isLoading: true, error: null })
     try {
-      // USAMOS SUPABASE EN LUGAR DE FETCH
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) throw error
-
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        console.error("❌ Error de Supabase:", error);
+        throw error;
+      }
+      console.log("✅ Login exitoso, datos:", data);
       set({ 
         user: data.user, 
         session: data.session,
@@ -28,6 +26,7 @@ export const useAuthStore = create((set) => ({
       })
       return true
     } catch (error) {
+      console.error("❌ Error de Supabase:", error);
       set({ error: error.message, isLoading: false })
       return false
     }
