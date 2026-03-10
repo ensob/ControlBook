@@ -3,6 +3,7 @@ import { supabase } from '../supabase';
 import Layout from '../components/Layout';
 
 export default function AdminDashboard() {
+  // Inicializamos como array vacío para evitar errores de undefined
   const [fichajes, setFichajes] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -11,29 +12,25 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchFichajes = async () => {
-    setLoading(true);
     try {
-      // Intentamos la consulta con el join
+      setLoading(true);
       const { data, error } = await supabase
         .from('fichajes')
-        .select(`
-          id, 
-          estado, 
-          timestamp, 
-          alumnos (nombre_completo, equipo)
-        `)
-        .order('timestamp', { ascending: false });
+        .select('*')
+        .order('fecha', { ascending: false });
 
       if (error) throw error;
-      setFichajes(data || []);
-    } catch (error) {
-      console.error("Error al obtener fichajes:", error.message);
+      
+      // Si data es null, usamos array vacío
+      setFichajes(data || []); 
+    } catch (err) {
+      console.error("Error al cargar:", err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div className="p-8 text-white">Cargando datos...</div>;
+  if (loading) return <div className="p-10 text-white">Cargando...</div>;
 
   return (
     <Layout>
@@ -44,21 +41,25 @@ export default function AdminDashboard() {
             <tr>
               <th className="p-4">Alumno</th>
               <th className="p-4">Equipo</th>
-              <th className="p-4">Estado</th>
               <th className="p-4">Hora</th>
+              <th className="p-4">Absentismo</th>
             </tr>
           </thead>
           <tbody>
-            {fichajes.map((f) => (
-              <tr key={f.id} className="border-t border-gray-700">
-                <td className="p-4">{f.alumnos?.nombre_completo || 'Desconocido'}</td>
-                <td className="p-4">{f.alumnos?.equipo || '-'}</td>
-                <td className={`p-4 font-bold ${f.estado === 'entrada' ? 'text-green-500' : 'text-red-500'}`}>
-                  {f.estado.toUpperCase()}
-                </td>
-                <td className="p-4">{new Date(f.timestamp).toLocaleTimeString()}</td>
+            {fichajes && fichajes.length > 0 ? (
+              fichajes.map((f) => (
+                <tr key={f.id} className="border-t border-gray-700">
+                  <td className="p-4">{f.nombre || 'N/A'}</td>
+                  <td className="p-4">{f.equipo || 'N/A'}</td>
+                  <td className="p-4">{f.hora_entrada || '-'}</td>
+                  <td className="p-4">{f.absentismo ? 'Sí' : 'No'}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="p-4 text-center text-gray-500">No hay fichajes registrados</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
