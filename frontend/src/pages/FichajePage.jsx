@@ -5,9 +5,9 @@ import { supabase } from '../supabase';
 export default function FichajePage() {
   const [loading, setLoading] = useState(false);
   const [alumnos, setAlumnos] = useState([]);
-  const [equipos, setEquipos] = useState([]);
+  const [areas, setAreas] = useState([]);
   const [selectedAlumno, setSelectedAlumno] = useState('');
-  const [selectedEquipo, setSelectedEquipo] = useState('');
+  const [selectedArea, setSelectedArea] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,9 +29,9 @@ export default function FichajePage() {
           .from('equipos')
           .select('*');
         if (error) throw error;
-        setEquipos(data);
+        setAreas(data);
       } catch (error) {
-        console.error('Error fetching equipos:', error);
+        console.error('Error fetching areas:', error);
       }
     };
 
@@ -48,7 +48,7 @@ export default function FichajePage() {
       .insert([
         {
           nombre: selectedAlumno,
-          equipo: selectedEquipo,
+          equipo: selectedArea,
           fecha: new Date().toISOString().split('T')[0],
           hora_entrada: new Date().toLocaleTimeString('es-ES', { hour12: false }),
           absentismo: false
@@ -61,7 +61,7 @@ export default function FichajePage() {
     } else {
       alert("¡Fichaje registrado con éxito!");
       setSelectedAlumno('');
-      setSelectedEquipo('');
+      setSelectedArea('');
     }
     setLoading(false);
   };
@@ -103,15 +103,15 @@ export default function FichajePage() {
               Seleccionar Área
             </label>
             <select 
-              value={selectedEquipo}
-              onChange={(e) => setSelectedEquipo(e.target.value)}
+              value={selectedArea}
+              onChange={(e) => setSelectedArea(e.target.value)}
               className="w-full bg-[#2a2a2a] border border-gray-600 rounded-2xl py-4 px-5 text-white focus:ring-2 focus:ring-orange-500 outline-none" 
               required
             >
               <option value="">Selecciona un área</option>
-              {equipos.map((equipo) => (
-                <option key={equipo.id} value={equipo.nombre}>
-                  {equipo.nombre}
+              {areas.map((area) => (
+                <option key={area.id} value={area.nombre}>
+                  {area.nombre}
                 </option>
               ))}
             </select>

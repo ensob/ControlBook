@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabase';
-import Layout from '../components/Layout';
+import Layout from './components/Layout';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ export default function AdminDashboard() {
   const [alumnos, setAlumnos] = useState([]);
   const [fichajes, setFichajes] = useState([]);
   const [nombre, setNombre] = useState('');
-  const [equipo, setEquipo] = useState('');
+  const [areas, setAreas] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Función de carga de datos (fuera de useEffect para reusarla)
@@ -44,15 +44,15 @@ export default function AdminDashboard() {
   }, []);
 
   const agregarAlumno = async () => {
-    if (!nombre || !equipo) return alert("Completa los campos");
+    if (!nombre || !areas) return alert("Completa los campos");
     setLoading(true);
-    const { error } = await supabase.from('alumnos').insert([{ nombre_completo: nombre, equipo }]);
+    const { error } = await supabase.from('alumnos').insert([{ nombre_completo: nombre, areas }]);
     
     if (error) {
       alert("Error: " + error.message);
     } else {
       setNombre('');
-      setEquipo('');
+      setAreas('');
       await cargarTodo(); // Recargar tras insertar
     }
     setLoading(false);
@@ -104,8 +104,8 @@ export default function AdminDashboard() {
                 <input 
                   placeholder="Equipo / Área" 
                   className="bg-[#2a2a2a] p-4 rounded-2xl w-full text-white border border-transparent focus:border-orange-500 outline-none transition-all" 
-                  value={equipo} 
-                  onChange={e => setEquipo(e.target.value)} 
+                  value={areas} 
+                  onChange={e => setAreas(e.target.value)} 
                 />
                 <button 
                   onClick={agregarAlumno} 
