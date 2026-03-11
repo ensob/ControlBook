@@ -5,7 +5,9 @@ import { supabase } from '../supabase';
 export default function FichajePage() {
   const [loading, setLoading] = useState(false);
   const [alumnos, setAlumnos] = useState([]);
+  const [equipos, setEquipos] = useState([]);
   const [selectedAlumno, setSelectedAlumno] = useState('');
+  const [selectedEquipo, setSelectedEquipo] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,7 +22,21 @@ export default function FichajePage() {
         console.error('Error fetching alumnos:', error);
       }
     };
+
+    const fetchEquipos = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('equipos')
+          .select('*');
+        if (error) throw error;
+        setEquipos(data);
+      } catch (error) {
+        console.error('Error fetching equipos:', error);
+      }
+    };
+
     fetchAlumnos();
+    fetchEquipos();
   }, []);
 
   const handleFichar = async (e) => {
@@ -32,7 +48,7 @@ export default function FichajePage() {
       .insert([
         {
           nombre: selectedAlumno,
-          equipo: 'Producción', // Por ahora fijo, luego lo haremos dinámico
+          equipo: selectedEquipo,
           fecha: new Date().toISOString().split('T')[0],
           hora_entrada: new Date().toLocaleTimeString('es-ES', { hour12: false }),
           absentismo: false
@@ -44,7 +60,8 @@ export default function FichajePage() {
       alert("Error: " + error.message);
     } else {
       alert("¡Fichaje registrado con éxito!");
-      setSelectedAlumno(''); // Limpiar el select
+      setSelectedAlumno('');
+      setSelectedEquipo('');
     }
     setLoading(false);
   };
@@ -76,6 +93,25 @@ export default function FichajePage() {
               {alumnos.map((alumno) => (
                 <option key={alumno.id} value={alumno.nombre_completo || alumno.nombre}>
                   {alumno.nombre_completo || alumno.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-300 uppercase mb-2 ml-1">
+              Seleccionar Área
+            </label>
+            <select 
+              value={selectedEquipo}
+              onChange={(e) => setSelectedEquipo(e.target.value)}
+              className="w-full bg-[#2a2a2a] border border-gray-600 rounded-2xl py-4 px-5 text-white focus:ring-2 focus:ring-orange-500 outline-none" 
+              required
+            >
+              <option value="">Selecciona un área</option>
+              {equipos.map((equipo) => (
+                <option key={equipo.id} value={equipo.nombre}>
+                  {equipo.nombre}
                 </option>
               ))}
             </select>

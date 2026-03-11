@@ -1,91 +1,174 @@
 import React, { useState, useEffect } from 'react';
-import { useAuthStore } from './context/store';
-import { useClassStore } from './context/store';
-import { useAttendanceStore } from './context/store';
-import { supabase } from './supabase';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabase';
+import Layout from '../components/Layout';
 
-const AdminDashboard = () => {
-  const { logout, user } = useAuthStore();
-  const { classes, fetchClasses } = useClassStore();
-  const { attendance, fetchAttendance } = useAttendanceStore();
+export default function AdminDashboard() {
+  const navigate = useNavigate();
+  
+  // Estados
   const [alumnos, setAlumnos] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [fichajes, setFichajes] = useState([]);
+  const [nombre, setNombre] = useState('');
+  const [equipo, setEquipo] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchClasses();
-    fetchAttendance(selectedDate);
-    fetchAlumnos();
-  }, [selectedDate]);
-
-  const fetchAlumnos = async () => {
+  // Función de carga de datos (fuera de useEffect para reusarla)
+  const cargarTodo = async () => {
     try {
-      const { data, error } = await supabase.from('alumnos').select('*');
-      if (error) throw error;
-      setAlumnos(data);
+      const { data: dataAlumnos, error: errAlumnos } = await supabase
+        .from('alumnos')
+        .select('*')
+        .order('nombre_completo', { ascending: true });
+
+      const { data: dataFichajes, error: errFichajes } = await supabase
+        .from('fichajes')
+        .select('*')
+        .order('fecha', { ascending: false })
+        .order('hora_entrada', { ascending: false });
+
+      if (errAlumnos) console.error("Error alumnos:", errAlumnos);
+      if (errFichajes) console.error("Error fichajes:", errFichajes);
+
+      setAlumnos(dataAlumnos || []);
+      setFichajes(dataFichajes || []);
     } catch (error) {
-      console.error('Error fetching alumnos:', error);
+      console.error("Error crítico en carga:", error);
     }
   };
 
+  // useEffect simple sin dependencias que causen bucles
+  useEffect(() => {
+    cargarTodo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const agregarAlumno = async () => {
+    if (!nombre || !equipo) return alert("Completa los campos");
+    setLoading(true);
+    const { error } = await supabase.from('alumnos').insert([{ nombre_completo: nombre, equipo }]);
+    
+    if (error) {
+      alert("Error: " + error.message);
+    } else {
+      setNombre('');
+      setEquipo('');
+      await cargarTodo(); // Recargar tras insertar
+    }
+    setLoading(false);
+  };
+
+  const eliminarAlumno = async (id) => {
+    if (!window.confirm("¿Seguro que quieres eliminar este alumno?")) return;
+    const { error } = await supabase.from('alumnos').delete().eq('id', id);
+    if (error) alert(error.message);
+    else await cargarTodo();
+  };
+
   const handleLogout = async () => {
-    await logout();
-    // Navigate to login or home
+    await supabase.auth.signOut();
+    navigate('/'); 
   };
 
   return (
-    <div className="min-h-screen bg-[#121212] text-white p-4">
-      <header className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <div>
-          <span className="mr-4">Bienvenido, {user?.email}</span>
-          <button onClick={handleLogout} className="bg-red-500 px-4 py-2 rounded">Logout</button>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Sección de Alumnos */}
-        <div className="bg-[#1e1e1e] p-6 rounded-lg">
-          <h2 className="text-xl font-bold mb-4">Alumnos</h2>
-          <ul>
-            {alumnos.map((alumno) => (
-              <li key={alumno.id} className="mb-2">{alumno.nombre_completo || alumno.nombre}</li>
-            ))}
-          </ul>
-          {/* Agregar botones para agregar/editar/eliminar alumnos */}
+    <Layout>
+      <div className="max-w-6xl mx-auto p-4 space-y-10">
+        
+        {/* Header con Logout */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#1e1e1e] p-6 rounded-[2rem] border border-gray-800">
+          <div>
+            <h2 className="text-3xl font-black italic text-orange-500 tracking-tighter">ADMIN DASHBOARD</h2>
+            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">Gestión de ControlBook</p>
+          </div>
+          <button 
+            onClick={handleLogout} 
+            className="bg-red-600 hover:bg-red-500 text-white font-black py-3 px-8 rounded-2xl transition-all active:scale-95 text-sm"
+          >
+            CERRAR SESIÓN
+          </button>
         </div>
 
-        {/* Sección de Fichajes */}
-        <div className="bg-[#1e1e1e] p-6 rounded-lg">
-          <h2 className="text-xl font-bold mb-4">Fichajes</h2>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="mb-4 p-2 bg-[#2a2a2a] text-white rounded"
-          />
-          <ul>
-            {attendance.map((fichaje) => (
-              <li key={fichaje.id} className="mb-2">
-                {fichaje.nombre} - {fichaje.hora_entrada} ({fichaje.fecha})
-              </li>
-            ))}
-          </ul>
-          {/* Agregar filtros o gestión de fichajes */}
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Columna Izquierda: Gestión */}
+          <div className="lg:col-span-1 space-y-6">
+            <section className="bg-[#1e1e1e] p-6 rounded-[2.5rem] border border-gray-700 shadow-xl">
+              <h3 className="text-lg font-black mb-4 uppercase text-white italic">Nuevo Alumno</h3>
+              <div className="space-y-3">
+                <input 
+                  placeholder="Nombre y Apellidos" 
+                  className="bg-[#2a2a2a] p-4 rounded-2xl w-full text-white border border-transparent focus:border-orange-500 outline-none transition-all" 
+                  value={nombre} 
+                  onChange={e => setNombre(e.target.value)} 
+                />
+                <input 
+                  placeholder="Equipo / Área" 
+                  className="bg-[#2a2a2a] p-4 rounded-2xl w-full text-white border border-transparent focus:border-orange-500 outline-none transition-all" 
+                  value={equipo} 
+                  onChange={e => setEquipo(e.target.value)} 
+                />
+                <button 
+                  onClick={agregarAlumno} 
+                  disabled={loading}
+                  className="w-full bg-orange-500 font-black py-4 rounded-2xl text-black hover:bg-orange-400 transition-all disabled:opacity-50"
+                >
+                  {loading ? 'AÑADIENDO...' : 'AÑADIR ALUMNO'}
+                </button>
+              </div>
+            </section>
 
-        {/* Sección de Equipos (Áreas) */}
-        <div className="bg-[#1e1e1e] p-6 rounded-lg">
-          <h2 className="text-xl font-bold mb-4">Equipos / Áreas</h2>
-          <ul>
-            {classes.map((equipo) => (
-              <li key={equipo.id} className="mb-2">{equipo.nombre}</li>
-            ))}
-          </ul>
-          {/* Agregar botones para gestionar equipos */}
+            <section className="bg-[#1e1e1e] p-6 rounded-[2.5rem] border border-gray-700 max-h-[500px] overflow-y-auto">
+              <h3 className="text-lg font-black mb-4 uppercase text-white italic">Alumnos ({alumnos.length})</h3>
+              <div className="space-y-3">
+                {alumnos.map(a => (
+                  <div key={a.id} className="flex justify-between items-center bg-[#2a2a2a] p-4 rounded-2xl border border-gray-800 group">
+                    <div>
+                      <p className="font-bold text-gray-100 leading-tight">{a.nombre_completo}</p>
+                      <p className="text-[10px] text-orange-500 font-black uppercase tracking-tighter">{a.equipo}</p>
+                    </div>
+                    <button 
+                      onClick={() => eliminarAlumno(a.id)} 
+                      className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-all"
+                    >
+                      <span className="text-xs font-bold">BORRAR</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* Columna Derecha: Fichajes */}
+          <div className="lg:col-span-2">
+            <section className="bg-[#1e1e1e] p-8 rounded-[2.5rem] border border-gray-700 shadow-xl h-full">
+              <h2 className="text-xl font-black mb-6 uppercase text-white italic tracking-widest">Historial de Fichajes</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-gray-500 text-left uppercase text-[10px] font-black border-b border-gray-800">
+                      <th className="pb-4 px-2">Alumno</th>
+                      <th className="pb-4 px-2">Área</th>
+                      <th className="pb-4 px-2 text-center">Fecha</th>
+                      <th className="pb-4 px-2 text-right">Hora</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {fichajes.map(f => (
+                      <tr key={f.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-4 px-2 font-bold text-gray-200">{f.nombre}</td>
+                        <td className="py-4 px-2 text-orange-500 font-medium">{f.equipo}</td>
+                        <td className="py-4 px-2 text-gray-400 text-center">{f.fecha}</td>
+                        <td className="py-4 px-2 text-gray-100 text-right font-mono">{f.hora_entrada}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
         </div>
       </div>
-    </div>
+    </Layout>
   );
-};
-
-export default AdminDashboard;
+}
