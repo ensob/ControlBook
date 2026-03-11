@@ -117,12 +117,66 @@ export default function FichajePage() {
             </select>
           </div>
 
-          <button 
-            type="submit"
-            className="w-full bg-orange-500 hover:bg-orange-400 text-black font-black py-5 rounded-2xl text-xl transition-all active:scale-95 shadow-[0_10px_30px_rgba(249,115,22,0.2)]"
-          >
-            {loading ? 'PROCESANDO...' : 'FICHAR AHORA'}
-          </button>
+          <div className="flex gap-4">
+            <button 
+              type="button"
+              onClick={async () => {
+                setLoading(true);
+                const { error } = await supabase
+                  .from('fichajes')
+                  .insert([
+                    {
+                      nombre: selectedAlumno,
+                      equipo: selectedArea,
+                      fecha: new Date().toISOString().split('T')[0],
+                      hora_entrada: new Date().toLocaleTimeString('es-ES', { hour12: false }),
+                      absentismo: false
+                    }
+                  ]);
+                if (error) {
+                  console.error("Error al guardar en Supabase:", error);
+                  alert("Error: " + error.message);
+                } else {
+                  alert("¡Entrada registrada con éxito!");
+                  setSelectedAlumno('');
+                  setSelectedArea('');
+                }
+                setLoading(false);
+              }}
+              className="flex-1 bg-orange-500 hover:bg-orange-400 text-black font-black py-5 rounded-2xl text-xl transition-all active:scale-95 shadow-[0_10px_30px_rgba(249,115,22,0.2)]"
+            >
+              {loading ? 'PROCESANDO...' : 'ENTRADA'}
+            </button>
+            <button 
+              type="button"
+              onClick={async () => {
+                setLoading(true);
+                const { error } = await supabase
+                  .from('fichajes')
+                  .insert([
+                    {
+                      nombre: selectedAlumno,
+                      equipo: selectedArea,
+                      fecha: new Date().toISOString().split('T')[0],
+                      hora_salida: new Date().toLocaleTimeString('es-ES', { hour12: false }),
+                      absentismo: false
+                    }
+                  ]);
+                if (error) {
+                  console.error("Error al guardar en Supabase:", error);
+                  alert("Error: " + error.message);
+                } else {
+                  alert("¡Salida registrada con éxito!");
+                  setSelectedAlumno('');
+                  setSelectedArea('');
+                }
+                setLoading(false);
+              }}
+              className="flex-1 bg-green-500 hover:bg-green-400 text-black font-black py-5 rounded-2xl text-xl transition-all active:scale-95 shadow-[0_10px_30px_rgba(249,115,22,0.2)]"
+            >
+              {loading ? 'PROCESANDO...' : 'SALIDA'}
+            </button>
+          </div>
         </form>
       </div>
 
