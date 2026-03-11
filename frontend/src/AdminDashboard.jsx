@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabase';
-import Layout from './components/Layout';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -30,7 +29,7 @@ export default function AdminDashboard() {
     try {
       const [respAlumnos, respAreas, respFichajes] = await Promise.all([
         supabase.from('alumnos').select('*').order('nombre_completo', { ascending: true }),
-        supabase.from('areas').select('*').order('name', { ascending: true }),
+        supabase.from('areas').select('*'),
         supabase.from('fichajes').select('*').order('fecha', { ascending: false }).order('hora_entrada', { ascending: false })
       ]);
 
@@ -81,7 +80,7 @@ export default function AdminDashboard() {
   const agregarArea = async () => {
     if (!nombreArea) return alert("Introduce el nombre del área");
     setLoading(true);
-    const { error } = await supabase.from('areas').insert([{ name: nombreArea }]);
+    const { error } = await supabase.from('areas').insert([{ nombre: nombreArea }]);
     
     if (error) {
       alert("Error: " + error.message);
@@ -135,7 +134,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <Layout>
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
       <div className="max-w-7xl mx-auto p-4 space-y-8">
         
         {/* Header */}
@@ -174,7 +173,7 @@ export default function AdminDashboard() {
                 >
                   <option value="">Selecciona área</option>
                   {areas.map(a => (
-                    <option key={a.id} value={a.name}>{a.name}</option>
+                    <option key={a.id} value={a.nombre}>{a.nombre}</option>
                   ))}
                 </select>
                 <button 
@@ -238,7 +237,7 @@ export default function AdminDashboard() {
               <div className="space-y-2">
                 {areas.map(a => (
                   <div key={a.id} className="flex justify-between items-center bg-[#2a2a2a] p-3 rounded-lg border border-gray-800 group hover:border-gray-700 transition-all">
-                    <p className="font-bold text-gray-100 text-sm">{a.name}</p>
+                    <p className="font-bold text-gray-100 text-sm">{a.nombre}</p>
                     <button 
                       onClick={() => eliminarArea(a.id)} 
                       className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-500/10 p-1 rounded transition-all"
@@ -272,7 +271,7 @@ export default function AdminDashboard() {
                 >
                   <option value="">Todas las áreas</option>
                   {areas.map(a => (
-                    <option key={a.id} value={a.name}>{a.name}</option>
+                    <option key={a.id} value={a.nombre}>{a.nombre}</option>
                   ))}
                 </select>
                 <input 
@@ -333,6 +332,6 @@ export default function AdminDashboard() {
 
         </div>
       </div>
-    </Layout>
+    </div>
   );
 }
