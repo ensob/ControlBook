@@ -312,26 +312,55 @@ export default function AdminDashboard() {
               <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0">
-                    <tr className="text-gray-500 text-left uppercase text-[9px] font-black border-b border-gray-800 bg-[#1e1e1e]">
-                      <th className="pb-3 px-2">Alumno</th>
-                      <th className="pb-3 px-2">Área</th>
-                      <th className="pb-3 px-2">Fecha</th>
-                      <th className="pb-3 px-2">Hora</th>
+                    <tr className="text-gray-500 text-left uppercase text-[10px] font-black border-b border-gray-800">
+                      <th className="pb-4 px-2">Alumno / Área</th>
+                      <th className="pb-4 px-2 text-center">Fecha</th>
+                      <th className="pb-4 px-2 text-center">Entrada</th>
+                      <th className="pb-4 px-2 text-center">Salida</th>
+                      <th className="pb-4 px-2 text-right">Estado</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
                     {fichajeFiltrados.length > 0 ? (
                       fichajeFiltrados.map(f => (
                         <tr key={f.id} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="py-2 px-2 font-bold text-gray-200 text-sm">{f.nombre}</td>
-                          <td className="py-2 px-2 text-orange-500 font-medium text-sm">{f.equipo}</td>
-                          <td className="py-2 px-2 text-gray-400 text-sm">{f.fecha}</td>
-                          <td className="py-2 px-2 text-gray-100 font-mono text-sm">{f.hora_entrada}</td>
+                          <td className="py-4 px-2">
+                            <p className="font-bold text-gray-200">{f.nombre}</p>
+                            <p className="text-[10px] text-orange-500 uppercase font-black">{f.equipo}</p>
+                          </td>
+                          <td className="py-4 px-2 text-gray-400 text-center">{f.fecha}</td>
+                          
+                          {/* Columna Entrada */}
+                          <td className="py-4 px-2 text-center">
+                            <span className="bg-green-500/10 text-green-500 border border-green-500/20 px-3 py-1 rounded-full font-mono font-bold">
+                              {f.hora_entrada}
+                            </span>
+                          </td>
+
+                          {/* Columna Salida */}
+                          <td className="py-4 px-2 text-center">
+                            {f.hora_salida ? (
+                              <span className="bg-orange-500/10 text-orange-500 border border-orange-500/20 px-3 py-1 rounded-full font-mono font-bold">
+                                {f.hora_salida}
+                              </span>
+                            ) : (
+                              <span className="text-gray-600 font-mono italic">--:--</span>
+                            )}
+                          </td>
+
+                          {/* Columna Estado Visual */}
+                          <td className="py-4 px-2 text-right">
+                            {f.hora_salida ? (
+                              <span className="text-[10px] bg-gray-800 text-gray-400 px-2 py-1 rounded uppercase font-black">Completado</span>
+                            ) : (
+                              <span className="text-[10px] bg-orange-500 text-black px-2 py-1 rounded uppercase font-black animate-pulse">En curso</span>
+                            )}
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="4" className="py-8 px-2 text-center text-gray-500 text-sm">
+                        <td colSpan="5" className="py-8 px-2 text-center text-gray-500 text-sm">
                           No hay fichajes que coincidan con los filtros
                         </td>
                       </tr>
