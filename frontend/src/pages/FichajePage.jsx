@@ -39,27 +39,33 @@ export default function FichajePage() {
     fetchAreas();
   }, []);
 
-  const handleFichar = async (e) => {
-    e.preventDefault();
+  const handleFichar = async (tipoFichaje) => {
+    if (!selectedAlumno || !selectedArea) {
+      alert('Selecciona un alumno y un área antes de fichar.');
+      return;
+    }
+
     setLoading(true);
+
+    const horaActual = new Date().toLocaleTimeString('es-ES', { hour12: false });
+    const datosFichaje = {
+      nombre: selectedAlumno,
+      equipo: selectedArea,
+      fecha: new Date().toISOString().split('T')[0],
+      absentismo: false,
+      hora_entrada: tipoFichaje === 'entrada' ? horaActual : null,
+      hora_salida: tipoFichaje === 'salida' ? horaActual : null
+    };
 
     const { error } = await supabase
       .from('fichajes')
-      .insert([
-        {
-          nombre: selectedAlumno,
-          equipo: selectedArea,
-          fecha: new Date().toISOString().split('T')[0],
-          hora_entrada: new Date().toLocaleTimeString('es-ES', { hour12: false }),
-          absentismo: false
-        }
-      ]);
+      .insert([datosFichaje]);
 
     if (error) {
       console.error("Error al guardar en Supabase:", error);
       alert("Error: " + error.message);
     } else {
-      alert("¡Fichaje registrado con éxito!");
+      alert(`¡${tipoFichaje === 'entrada' ? 'Entrada' : 'Salida'} registrada con éxito!`);
       setSelectedAlumno('');
       setSelectedArea('');
     }
@@ -78,7 +84,7 @@ export default function FichajePage() {
 
       {/* Contenedor Principal Unificado */}
       <div className="max-w-md w-full bg-[#1e1e1e] p-8 rounded-[2.5rem] border border-gray-700 shadow-2xl">
-        <form onSubmit={handleFichar} className="space-y-6">
+        <div className="space-y-6">
           <div>
             <label className="block text-xs font-bold text-gray-300 uppercase mb-2 ml-1">
               Seleccionar Alumno
@@ -117,13 +123,25 @@ export default function FichajePage() {
             </select>
           </div>
 
-          <button 
-            type="submit"
-            className="w-full bg-orange-500 hover:bg-orange-400 text-black font-black py-5 rounded-2xl text-xl transition-all active:scale-95 shadow-[0_10px_30px_rgba(249,115,22,0.2)]"
-          >
-            {loading ? 'PROCESANDO...' : 'FICHAR AHORA'}
-          </button>
-        </form>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleFichar('entrada')}
+              disabled={loading}
+              className="w-full bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-black font-black py-5 rounded-2xl text-lg transition-all active:scale-95 shadow-[0_10px_30px_rgba(249,115,22,0.2)]"
+            >
+              {loading ? 'PROCESANDO...' : 'FICHAR ENTRADA'}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFichar('salida')}
+              disabled={loading}
+              className="w-full bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-white font-black py-5 rounded-2xl text-lg transition-all active:scale-95 shadow-[0_10px_30px_rgba(59,130,246,0.25)]"
+            >
+              {loading ? 'PROCESANDO...' : 'FICHAR SALIDA'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Footer */}

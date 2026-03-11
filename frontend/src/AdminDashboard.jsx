@@ -110,12 +110,13 @@ export default function AdminDashboard() {
   const exportarCSV = () => {
     if (fichajeFiltrados.length === 0) return alert("No hay datos para exportar");
     
-    const headers = ['Alumno', 'Área', 'Fecha', 'Hora', 'Absentismo'];
+    const headers = ['Alumno', 'Área', 'Fecha', 'Hora entrada', 'Hora salida', 'Absentismo'];
     const rows = fichajeFiltrados.map(f => [
       f.nombre,
       f.equipo,
       f.fecha,
       f.hora_entrada,
+      f.hora_salida,
       f.absentismo ? 'Sí' : 'No'
     ]);
     
@@ -316,7 +317,8 @@ export default function AdminDashboard() {
                       <th className="pb-3 px-2">Alumno</th>
                       <th className="pb-3 px-2">Área</th>
                       <th className="pb-3 px-2">Fecha</th>
-                      <th className="pb-3 px-2">Hora</th>
+                      <th className="pb-3 px-2">Hora entrada</th>
+                      <th className="pb-3 px-2">Hora salida</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
@@ -326,12 +328,13 @@ export default function AdminDashboard() {
                           <td className="py-2 px-2 font-bold text-gray-200 text-sm">{f.nombre}</td>
                           <td className="py-2 px-2 text-orange-500 font-medium text-sm">{f.equipo}</td>
                           <td className="py-2 px-2 text-gray-400 text-sm">{f.fecha}</td>
-                          <td className="py-2 px-2 text-gray-100 font-mono text-sm">{f.hora_entrada}</td>
+                          <td className="py-2 px-2 text-gray-100 font-mono text-sm">{f.hora_entrada || '-'}</td>
+                          <td className="py-2 px-2 text-gray-100 font-mono text-sm">{f.hora_salida || '-'}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="4" className="py-8 px-2 text-center text-gray-500 text-sm">
+                        <td colSpan="5" className="py-8 px-2 text-center text-gray-500 text-sm">
                           No hay fichajes que coincidan con los filtros
                         </td>
                       </tr>

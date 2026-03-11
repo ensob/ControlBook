@@ -41,7 +41,8 @@ export default function AdminDashboard() {
             <tr>
               <th className="p-4">Alumno</th>
               <th className="p-4">Equipo</th>
-              <th className="p-4">Hora</th>
+              <th className="p-4">Hora entrada</th>
+              <th className="p-4">Hora salida</th>
               <th className="p-4">Absentismo</th>
             </tr>
           </thead>
@@ -52,12 +53,13 @@ export default function AdminDashboard() {
                   <td className="p-4">{f.nombre || 'N/A'}</td>
                   <td className="p-4">{f.equipo || 'N/A'}</td>
                   <td className="p-4">{f.hora_entrada || '-'}</td>
+                  <td className="p-4">{f.hora_salida || '-'}</td>
                   <td className="p-4">{f.absentismo ? 'Sí' : 'No'}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="p-4 text-center text-gray-500">No hay fichajes registrados</td>
+                <td colSpan="5" className="p-4 text-center text-gray-500">No hay fichajes registrados</td>
               </tr>
             )}
           </tbody>
