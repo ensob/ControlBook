@@ -351,9 +351,17 @@ export default function AdminDashboard() {
                           {/* Columna Estado Visual */}
                           <td className="py-4 px-2 text-right">
                             {f.hora_salida ? (
-                              <span className="text-[10px] bg-gray-800 text-gray-400 px-2 py-1 rounded uppercase font-black">Completado</span>
+                              <span className="text-[10px] bg-gray-800 text-gray-400 px-2 py-1 rounded uppercase font-black">
+                                Completado
+                              </span>
+                            ) : f.fecha === new Date().toISOString().split('T')[0] ? (
+                              <span className="text-[10px] bg-green-500 text-black px-2 py-1 rounded uppercase font-black animate-pulse">
+                                En curso
+                              </span>
                             ) : (
-                              <span className="text-[10px] bg-orange-500 text-black px-2 py-1 rounded uppercase font-black animate-pulse">En curso</span>
+                              <span className="text-[10px] bg-red-600 text-white px-2 py-1 rounded uppercase font-black">
+                                SIN SALIDA (OLVIDO)
+                              </span>
                             )}
                           </td>
                         </tr>

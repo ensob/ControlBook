@@ -150,23 +150,27 @@ export default function FichajePage() {
             <button 
               type="button"
               onClick={async () => {
+                const hoy = new Date().toISOString().split('T')[0];
+                const ahora = new Date().toLocaleTimeString('es-ES', { hour12: false });
+                
                 setLoading(true);
-                const { error } = await supabase
+                
+                // 1. Intentamos actualizar el registro de HOY que esté abierto (hora_salida sea null)
+                const { data, error } = await supabase
                   .from('fichajes')
-                  .insert([
-                    {
-                      nombre: selectedAlumno,
-                      equipo: selectedArea,
-                      fecha: new Date().toISOString().split('T')[0],
-                      hora_salida: new Date().toLocaleTimeString('es-ES', { hour12: false }),
-                      absentismo: false
-                    }
-                  ]);
+                  .update({ hora_salida: ahora })
+                  .eq('nombre', selectedAlumno)
+                  .eq('fecha', hoy)
+                  .is('hora_salida', null)
+                  .select(); // El select nos permite saber si realmente se actualizó algo
+                
                 if (error) {
-                  console.error("Error al guardar en Supabase:", error);
-                  alert("Error: " + error.message);
+                  alert("Error técnico: " + error.message);
+                } else if (data && data.length === 0) {
+                  // Si no se actualizó nada, es porque no hay un fichaje de entrada hoy
+                  alert("❌ No puedes fichar salida: O ya has fichado salida hoy, o no has fichado entrada todavía.");
                 } else {
-                  alert("¡Salida registrada con éxito!");
+                  alert(`✅ Salida registrada a las ${ahora}. ¡Buen trabajo!`);
                   setSelectedAlumno('');
                   setSelectedArea('');
                 }
