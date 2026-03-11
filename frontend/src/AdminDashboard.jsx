@@ -151,6 +151,18 @@ export default function AdminDashboard() {
           </button>
         </div>
 
+        {/* Estadísticas */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-[#2a2a2a] p-4 rounded-2xl border border-gray-700 text-center">
+            <p className="text-gray-400 text-xs font-bold uppercase">Total Alumnos</p>
+            <p className="text-2xl font-black text-orange-500">{alumnos.length}</p>
+          </div>
+          <div className="bg-[#2a2a2a] p-4 rounded-2xl border border-gray-700 text-center">
+            <p className="text-gray-400 text-xs font-bold uppercase">Áreas Activas</p>
+            <p className="text-2xl font-black text-white">{areas.length}</p>
+          </div>
+        </div>
+
         {/* Grid principal 4 columnas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           
