@@ -6,54 +6,66 @@ import Layout from './components/Layout';
 export default function AdminDashboard() {
   const navigate = useNavigate();
   
-  // Estados
+  // Estados principales
   const [alumnos, setAlumnos] = useState([]);
+  const [areas, setAreas] = useState([]);
   const [fichajes, setFichajes] = useState([]);
-  const [nombre, setNombre] = useState('');
-  const [areas, setAreas] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Formulario Alumno
+  const [nombreAlumno, setNombreAlumno] = useState('');
+  const [equipoAlumno, setEquipoAlumno] = useState('');
+  
+  // Formulario Área
+  const [nombreArea, setNombreArea] = useState('');
+  
+  // Filtros Fichajes
+  const [filtroArea, setFiltroArea] = useState('');
+  const [filtroFecha, setFiltroFecha] = useState('');
+  const [filtroAlumno, setFiltroAlumno] = useState('');
 
-  // Función de carga de datos (fuera de useEffect para reusarla)
+  // Función de carga de datos
   const cargarTodo = async () => {
+    setLoading(true);
     try {
-      const { data: dataAlumnos, error: errAlumnos } = await supabase
-        .from('alumnos')
-        .select('*')
-        .order('nombre_completo', { ascending: true });
+      const [respAlumnos, respAreas, respFichajes] = await Promise.all([
+        supabase.from('alumnos').select('*').order('nombre_completo', { ascending: true }),
+        supabase.from('areas').select('*').order('name', { ascending: true }),
+        supabase.from('fichajes').select('*').order('fecha', { ascending: false }).order('hora_entrada', { ascending: false })
+      ]);
 
-      const { data: dataFichajes, error: errFichajes } = await supabase
-        .from('fichajes')
-        .select('*')
-        .order('fecha', { ascending: false })
-        .order('hora_entrada', { ascending: false });
+      if (respAlumnos.error) console.error("Error alumnos:", respAlumnos.error);
+      if (respAreas.error) console.error("Error areas:", respAreas.error);
+      if (respFichajes.error) console.error("Error fichajes:", respFichajes.error);
 
-      if (errAlumnos) console.error("Error alumnos:", errAlumnos);
-      if (errFichajes) console.error("Error fichajes:", errFichajes);
-
-      setAlumnos(dataAlumnos || []);
-      setFichajes(dataFichajes || []);
+      setAlumnos(respAlumnos.data || []);
+      setAreas(respAreas.data || []);
+      setFichajes(respFichajes.data || []);
     } catch (error) {
       console.error("Error crítico en carga:", error);
     }
+    setLoading(false);
   };
 
-  // useEffect simple sin dependencias que causen bucles
   useEffect(() => {
     cargarTodo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // GESTIÓN DE ALUMNOS
   const agregarAlumno = async () => {
-    if (!nombre || !areas) return alert("Completa los campos");
+    if (!nombreAlumno || !equipoAlumno) return alert("Completa todos los campos");
     setLoading(true);
-    const { error } = await supabase.from('alumnos').insert([{ nombre_completo: nombre, areas }]);
+    const { error } = await supabase.from('alumnos').insert([{ 
+      nombre_completo: nombreAlumno, 
+      equipo: equipoAlumno 
+    }]);
     
     if (error) {
       alert("Error: " + error.message);
     } else {
-      setNombre('');
-      setAreas('');
-      await cargarTodo(); // Recargar tras insertar
+      setNombreAlumno('');
+      setEquipoAlumno('');
+      await cargarTodo();
     }
     setLoading(false);
   };
@@ -65,6 +77,58 @@ export default function AdminDashboard() {
     else await cargarTodo();
   };
 
+  // GESTIÓN DE ÁREAS
+  const agregarArea = async () => {
+    if (!nombreArea) return alert("Introduce el nombre del área");
+    setLoading(true);
+    const { error } = await supabase.from('areas').insert([{ name: nombreArea }]);
+    
+    if (error) {
+      alert("Error: " + error.message);
+    } else {
+      setNombreArea('');
+      await cargarTodo();
+    }
+    setLoading(false);
+  };
+
+  const eliminarArea = async (id) => {
+    if (!window.confirm("¿Seguro que quieres eliminar esta área?")) return;
+    const { error } = await supabase.from('areas').delete().eq('id', id);
+    if (error) alert(error.message);
+    else await cargarTodo();
+  };
+
+  // FILTRADO DE FICHAJES
+  const fichajeFiltrados = fichajes.filter(f => {
+    const cumpleFiltroArea = !filtroArea || f.equipo === filtroArea;
+    const cumpleFiltroFecha = !filtroFecha || f.fecha === filtroFecha;
+    const cumpleFiltroAlumno = !filtroAlumno || f.nombre.toLowerCase().includes(filtroAlumno.toLowerCase());
+    return cumpleFiltroArea && cumpleFiltroFecha && cumpleFiltroAlumno;
+  });
+
+  // EXPORTAR A CSV
+  const exportarCSV = () => {
+    if (fichajeFiltrados.length === 0) return alert("No hay datos para exportar");
+    
+    const headers = ['Alumno', 'Área', 'Fecha', 'Hora', 'Absentismo'];
+    const rows = fichajeFiltrados.map(f => [
+      f.nombre,
+      f.equipo,
+      f.fecha,
+      f.hora_entrada,
+      f.absentismo ? 'Sí' : 'No'
+    ]);
+    
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fichajes_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/'); 
@@ -72,13 +136,13 @@ export default function AdminDashboard() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto p-4 space-y-10">
+      <div className="max-w-7xl mx-auto p-4 space-y-8">
         
-        {/* Header con Logout */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#1e1e1e] p-6 rounded-[2rem] border border-gray-800">
           <div>
             <h2 className="text-3xl font-black italic text-orange-500 tracking-tighter">ADMIN DASHBOARD</h2>
-            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">Gestión de ControlBook</p>
+            <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">Gestión completa de ControlBook</p>
           </div>
           <button 
             onClick={handleLogout} 
@@ -88,49 +152,57 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Grid principal 4 columnas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           
-          {/* Columna Izquierda: Gestión */}
-          <div className="lg:col-span-1 space-y-6">
-            <section className="bg-[#1e1e1e] p-6 rounded-[2.5rem] border border-gray-700 shadow-xl">
-              <h3 className="text-lg font-black mb-4 uppercase text-white italic">Nuevo Alumno</h3>
+          {/* COLUMNA 1: GESTIÓN DE ALUMNOS */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Agregar alumno */}
+            <section className="bg-[#1e1e1e] p-6 rounded-[2rem] border border-gray-700">
+              <h3 className="text-base font-black mb-4 uppercase text-white italic">Nuevo Alumno</h3>
               <div className="space-y-3">
                 <input 
-                  placeholder="Nombre y Apellidos" 
-                  className="bg-[#2a2a2a] p-4 rounded-2xl w-full text-white border border-transparent focus:border-orange-500 outline-none transition-all" 
-                  value={nombre} 
-                  onChange={e => setNombre(e.target.value)} 
+                  placeholder="Nombre completo" 
+                  className="bg-[#2a2a2a] p-3 rounded-xl w-full text-white text-sm border border-transparent focus:border-orange-500 outline-none transition-all" 
+                  value={nombreAlumno} 
+                  onChange={e => setNombreAlumno(e.target.value)} 
                 />
-                <input 
-                  placeholder="Equipo / Área" 
-                  className="bg-[#2a2a2a] p-4 rounded-2xl w-full text-white border border-transparent focus:border-orange-500 outline-none transition-all" 
-                  value={areas} 
-                  onChange={e => setAreas(e.target.value)} 
-                />
+                <select 
+                  className="bg-[#2a2a2a] p-3 rounded-xl w-full text-white text-sm border border-transparent focus:border-orange-500 outline-none transition-all"
+                  value={equipoAlumno}
+                  onChange={e => setEquipoAlumno(e.target.value)}
+                >
+                  <option value="">Selecciona área</option>
+                  {areas.map(a => (
+                    <option key={a.id} value={a.name}>{a.name}</option>
+                  ))}
+                </select>
                 <button 
                   onClick={agregarAlumno} 
                   disabled={loading}
-                  className="w-full bg-orange-500 font-black py-4 rounded-2xl text-black hover:bg-orange-400 transition-all disabled:opacity-50"
+                  className="w-full bg-orange-500 font-black py-3 rounded-xl text-black hover:bg-orange-400 transition-all disabled:opacity-50 text-sm"
                 >
-                  {loading ? 'AÑADIENDO...' : 'AÑADIR ALUMNO'}
+                  AÑADIR
                 </button>
               </div>
             </section>
 
-            <section className="bg-[#1e1e1e] p-6 rounded-[2.5rem] border border-gray-700 max-h-[500px] overflow-y-auto">
-              <h3 className="text-lg font-black mb-4 uppercase text-white italic">Alumnos ({alumnos.length})</h3>
-              <div className="space-y-3">
+            {/* Listado alumnos */}
+            <section className="bg-[#1e1e1e] p-6 rounded-[2rem] border border-gray-700 max-h-[450px] overflow-y-auto">
+              <h3 className="text-base font-black mb-3 uppercase text-white italic">Alumnos ({alumnos.length})</h3>
+              <div className="space-y-2">
                 {alumnos.map(a => (
-                  <div key={a.id} className="flex justify-between items-center bg-[#2a2a2a] p-4 rounded-2xl border border-gray-800 group">
-                    <div>
-                      <p className="font-bold text-gray-100 leading-tight">{a.nombre_completo}</p>
-                      <p className="text-[10px] text-orange-500 font-black uppercase tracking-tighter">{a.equipo}</p>
+                  <div key={a.id} className="flex justify-between items-center bg-[#2a2a2a] p-3 rounded-lg border border-gray-800 group hover:border-gray-700 transition-all">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-100 leading-tight text-sm truncate">{a.nombre_completo}</p>
+                      <p className="text-[9px] text-orange-500 font-black uppercase tracking-tighter">{a.equipo}</p>
                     </div>
                     <button 
                       onClick={() => eliminarAlumno(a.id)} 
-                      className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-all"
+                      className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-500/10 p-1 rounded transition-all ml-2 flex-shrink-0"
+                      title="Eliminar"
                     >
-                      <span className="text-xs font-bold">BORRAR</span>
+                      ✕
                     </button>
                   </div>
                 ))}
@@ -138,29 +210,121 @@ export default function AdminDashboard() {
             </section>
           </div>
 
-          {/* Columna Derecha: Fichajes */}
-          <div className="lg:col-span-2">
-            <section className="bg-[#1e1e1e] p-8 rounded-[2.5rem] border border-gray-700 shadow-xl h-full">
-              <h2 className="text-xl font-black mb-6 uppercase text-white italic tracking-widest">Historial de Fichajes</h2>
-              <div className="overflow-x-auto">
+          {/* COLUMNA 2: GESTIÓN DE ÁREAS */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Agregar área */}
+            <section className="bg-[#1e1e1e] p-6 rounded-[2rem] border border-gray-700">
+              <h3 className="text-base font-black mb-4 uppercase text-white italic">Nueva Área</h3>
+              <div className="space-y-3">
+                <input 
+                  placeholder="Nombre del área" 
+                  className="bg-[#2a2a2a] p-3 rounded-xl w-full text-white text-sm border border-transparent focus:border-orange-500 outline-none transition-all" 
+                  value={nombreArea} 
+                  onChange={e => setNombreArea(e.target.value)} 
+                />
+                <button 
+                  onClick={agregarArea} 
+                  disabled={loading}
+                  className="w-full bg-green-600 font-black py-3 rounded-xl text-white hover:bg-green-500 transition-all disabled:opacity-50 text-sm"
+                >
+                  CREAR ÁREA
+                </button>
+              </div>
+            </section>
+
+            {/* Listado áreas */}
+            <section className="bg-[#1e1e1e] p-6 rounded-[2rem] border border-gray-700 max-h-[450px] overflow-y-auto">
+              <h3 className="text-base font-black mb-3 uppercase text-white italic">Áreas ({areas.length})</h3>
+              <div className="space-y-2">
+                {areas.map(a => (
+                  <div key={a.id} className="flex justify-between items-center bg-[#2a2a2a] p-3 rounded-lg border border-gray-800 group hover:border-gray-700 transition-all">
+                    <p className="font-bold text-gray-100 text-sm">{a.name}</p>
+                    <button 
+                      onClick={() => eliminarArea(a.id)} 
+                      className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-500/10 p-1 rounded transition-all"
+                      title="Eliminar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* COLUMNA 3-4: GESTIÓN DE FICHAJES */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Filtros */}
+            <section className="bg-[#1e1e1e] p-6 rounded-[2rem] border border-gray-700">
+              <h3 className="text-base font-black mb-4 uppercase text-white italic mb-4">Filtros de Fichajes</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <input 
+                  type="text"
+                  placeholder="Búscar alumno..." 
+                  className="bg-[#2a2a2a] p-3 rounded-xl text-white text-sm border border-transparent focus:border-orange-500 outline-none transition-all col-span-1"
+                  value={filtroAlumno}
+                  onChange={e => setFiltroAlumno(e.target.value)}
+                />
+                <select 
+                  className="bg-[#2a2a2a] p-3 rounded-xl text-white text-sm border border-transparent focus:border-orange-500 outline-none transition-all col-span-1"
+                  value={filtroArea}
+                  onChange={e => setFiltroArea(e.target.value)}
+                >
+                  <option value="">Todas las áreas</option>
+                  {areas.map(a => (
+                    <option key={a.id} value={a.name}>{a.name}</option>
+                  ))}
+                </select>
+                <input 
+                  type="date"
+                  className="bg-[#2a2a2a] p-3 rounded-xl text-white text-sm border border-transparent focus:border-orange-500 outline-none transition-all col-span-1"
+                  value={filtroFecha}
+                  onChange={e => setFiltroFecha(e.target.value)}
+                />
+              </div>
+              <div className="mt-4 text-xs text-gray-400">
+                Mostrando {fichajeFiltrados.length} de {fichajes.length} fichajes
+              </div>
+            </section>
+
+            {/* Tabla fichajes */}
+            <section className="bg-[#1e1e1e] p-6 rounded-[2rem] border border-gray-700">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-base font-black uppercase text-white italic">Historial ({fichajeFiltrados.length})</h3>
+                <button 
+                  onClick={exportarCSV}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-black py-2 px-4 rounded-lg transition-all text-sm"
+                >
+                  📥 Exportar CSV
+                </button>
+              </div>
+              <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-gray-500 text-left uppercase text-[10px] font-black border-b border-gray-800">
-                      <th className="pb-4 px-2">Alumno</th>
-                      <th className="pb-4 px-2">Área</th>
-                      <th className="pb-4 px-2 text-center">Fecha</th>
-                      <th className="pb-4 px-2 text-right">Hora</th>
+                  <thead className="sticky top-0">
+                    <tr className="text-gray-500 text-left uppercase text-[9px] font-black border-b border-gray-800 bg-[#1e1e1e]">
+                      <th className="pb-3 px-2">Alumno</th>
+                      <th className="pb-3 px-2">Área</th>
+                      <th className="pb-3 px-2">Fecha</th>
+                      <th className="pb-3 px-2">Hora</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {fichajes.map(f => (
-                      <tr key={f.id} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="py-4 px-2 font-bold text-gray-200">{f.nombre}</td>
-                        <td className="py-4 px-2 text-orange-500 font-medium">{f.equipo}</td>
-                        <td className="py-4 px-2 text-gray-400 text-center">{f.fecha}</td>
-                        <td className="py-4 px-2 text-gray-100 text-right font-mono">{f.hora_entrada}</td>
+                    {fichajeFiltrados.length > 0 ? (
+                      fichajeFiltrados.map(f => (
+                        <tr key={f.id} className="hover:bg-white/[0.02] transition-colors">
+                          <td className="py-2 px-2 font-bold text-gray-200 text-sm">{f.nombre}</td>
+                          <td className="py-2 px-2 text-orange-500 font-medium text-sm">{f.equipo}</td>
+                          <td className="py-2 px-2 text-gray-400 text-sm">{f.fecha}</td>
+                          <td className="py-2 px-2 text-gray-100 font-mono text-sm">{f.hora_entrada}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="py-8 px-2 text-center text-gray-500 text-sm">
+                          No hay fichajes que coincidan con los filtros
+                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>

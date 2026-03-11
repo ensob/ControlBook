@@ -23,10 +23,10 @@ export default function FichajePage() {
       }
     };
 
-    const fetchEquipos = async () => {
+    const fetchAreas = async () => {
       try {
         const { data, error } = await supabase
-          .from('equipos')
+          .from('areas')
           .select('*');
         if (error) throw error;
         setAreas(data);
@@ -36,7 +36,7 @@ export default function FichajePage() {
     };
 
     fetchAlumnos();
-    fetchEquipos();
+    fetchAreas();
   }, []);
 
   const handleFichar = async (e) => {
