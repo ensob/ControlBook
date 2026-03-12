@@ -11,6 +11,19 @@ export default function AdminDashboard() {
   const [fichajes, setFichajes] = useState([]);
   const [loading, setLoading] = useState(false);
   
+  // Función para formatear fechas y horas de manera consistente con Supabase
+  const formatSupabaseDateTime = (date) => {
+    return date.toISOString();
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('es-ES', { hour12: false });
+  };
+
+  const formatDate = (date) => {
+    return date.toISOString().split('T')[0];
+  };
+  
   // Formulario Alumno
   const [nombreAlumno, setNombreAlumno] = useState('');
   const [equipoAlumno, setEquipoAlumno] = useState('');
@@ -22,6 +35,18 @@ export default function AdminDashboard() {
   const [filtroArea, setFiltroArea] = useState('');
   const [filtroFecha, setFiltroFecha] = useState('');
   const [filtroAlumno, setFiltroAlumno] = useState('');
+
+  // Estados para edición de fichajes
+  const [editingFichaje, setEditingFichaje] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    nombre: '',
+    equipo: '',
+    fecha: '',
+    hora_entrada: '',
+    hora_salida: '',
+    absentismo: false
+  });
 
   // Función de carga de datos
   const cargarTodo = async () => {
@@ -126,6 +151,78 @@ export default function AdminDashboard() {
     a.href = url;
     a.download = `fichajes_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
+  };
+
+  // Funciones para editar fichajes
+  const openEditModal = (fichaje) => {
+    setEditingFichaje(fichaje);
+    setEditFormData({
+      nombre: fichaje.nombre || '',
+      equipo: fichaje.equipo || '',
+      fecha: fichaje.fecha || new Date().toISOString().split('T')[0],
+      hora_entrada: fichaje.hora_entrada || '',
+      hora_salida: fichaje.hora_salida || '',
+      absentismo: fichaje.absentismo || false
+    });
+    setEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingFichaje(null);
+    setEditFormData({
+      nombre: '',
+      equipo: '',
+      fecha: '',
+      hora_entrada: '',
+      hora_salida: '',
+      absentismo: false
+    });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      // Parse the dates to ensure proper formatting
+      const fechaDate = new Date(editFormData.fecha);
+      const entradaDate = new Date(`${editFormData.fecha}T${editFormData.hora_entrada}`);
+      
+      const updateData = {
+        nombre: editFormData.nombre,
+        equipo: editFormData.equipo,
+        fecha: editFormData.fecha,
+        hora_entrada: editFormData.hora_entrada,
+        absentismo: editFormData.absentismo
+      };
+      
+      // Only add hora_salida if it's provided
+      if (editFormData.hora_salida) {
+        updateData.hora_salida = editFormData.hora_salida;
+        const salidaDate = new Date(`${editFormData.fecha}T${editFormData.hora_salida}`);
+        updateData.updated_at = formatSupabaseDateTime(salidaDate);
+      } else {
+        updateData.updated_at = formatSupabaseDateTime(entradaDate);
+      }
+      
+      const { error } = await supabase
+        .from('fichajes')
+        .update(updateData)
+        .eq('id', editingFichaje.id);
+      
+      if (error) {
+        alert("Error al actualizar el fichaje: " + error.message);
+      } else {
+        await cargarTodo();
+        closeEditModal();
+        alert("Fichaje actualizado correctamente");
+      }
+    } catch (error) {
+      console.error("Error al actualizar fichaje:", error);
+      alert("Error al actualizar el fichaje");
+    }
+    setLoading(false);
   };
 
   const handleLogout = async () => {
@@ -318,6 +415,7 @@ export default function AdminDashboard() {
                       <th className="pb-4 px-2 text-center">Entrada</th>
                       <th className="pb-4 px-2 text-center">Salida</th>
                       <th className="pb-4 px-2 text-right">Estado</th>
+                      <th className="pb-4 px-2 text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
@@ -364,11 +462,21 @@ export default function AdminDashboard() {
                               </span>
                             )}
                           </td>
+                          
+                          {/* Columna Acciones */}
+                          <td className="py-4 px-2 text-right">
+                            <button
+                              onClick={() => openEditModal(f)}
+                              className="text-orange-500 hover:text-orange-400 font-bold text-sm px-3 py-1 rounded-lg border border-orange-500/30 hover:border-orange-500/50 transition-all"
+                            >
+                              Editar
+                            </button>
+                          </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="py-8 px-2 text-center text-gray-500 text-sm">
+                        <td colSpan="6" className="py-8 px-2 text-center text-gray-500 text-sm">
                           No hay fichajes que coincidan con los filtros
                         </td>
                       </tr>
@@ -380,6 +488,125 @@ export default function AdminDashboard() {
           </div>
 
         </div>
+              {/* Modal de Edición de Fichaje */}
+        {editModalOpen && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#1e1e1e] rounded-2xl border border-gray-700 w-full max-w-md p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-black text-white">Editar Fichaje</h3>
+                <button 
+                  onClick={closeEditModal}
+                  className="text-gray-500 hover:text-white text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase mb-2">
+                    Nombre del Alumno
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-[#2a2a2a] border border-gray-600 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                    value={editFormData.nombre}
+                    onChange={(e) => setEditFormData({...editFormData, nombre: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase mb-2">
+                    Área
+                  </label>
+                  <select
+                    className="w-full bg-[#2a2a2a] border border-gray-600 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                    value={editFormData.equipo}
+                    onChange={(e) => setEditFormData({...editFormData, equipo: e.target.value})}
+                    required
+                  >
+                    <option value="">Selecciona un área</option>
+                    {areas.map(area => (
+                      <option key={area.id} value={area.nombre}>{area.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 uppercase mb-2">
+                    Fecha
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full bg-[#2a2a2a] border border-gray-600 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                    value={editFormData.fecha}
+                    onChange={(e) => setEditFormData({...editFormData, fecha: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 uppercase mb-2">
+                      Hora Entrada
+                    </label>
+                    <input
+                      type="time"
+                      className="w-full bg-[#2a2a2a] border border-gray-600 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                      value={editFormData.hora_entrada}
+                      onChange={(e) => setEditFormData({...editFormData, hora_entrada: e.target.value})}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 uppercase mb-2">
+                      Hora Salida
+                    </label>
+                    <input
+                      type="time"
+                      className="w-full bg-[#2a2a2a] border border-gray-600 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                      value={editFormData.hora_salida || ''}
+                      onChange={(e) => setEditFormData({...editFormData, hora_salida: e.target.value || null})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="absentismo"
+                    className="w-4 h-4 text-orange-500 bg-[#2a2a2a] border-gray-600 rounded focus:ring-orange-500"
+                    checked={editFormData.absentismo}
+                    onChange={(e) => setEditFormData({...editFormData, absentismo: e.target.checked})}
+                  />
+                  <label htmlFor="absentismo" className="ml-2 text-sm text-gray-300">
+                    Marcar como absentismo
+                  </label>
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={closeEditModal}
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-black py-3 rounded-xl transition-all"
+                    disabled={loading}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-orange-500 hover:bg-orange-400 text-black font-black py-3 rounded-xl transition-all"
+                    disabled={loading}
+                  >
+                    {loading ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

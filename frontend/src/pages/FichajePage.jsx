@@ -10,6 +10,19 @@ export default function FichajePage() {
   const [selectedArea, setSelectedArea] = useState('');
   const navigate = useNavigate();
 
+  // Función para formatear fechas y horas de manera consistente con Supabase
+  const formatSupabaseDateTime = (date) => {
+    return date.toISOString();
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('es-ES', { hour12: false });
+  };
+
+  const formatDate = (date) => {
+    return date.toISOString().split('T')[0];
+  };
+
   useEffect(() => {
     const fetchAlumnos = async () => {
       try {
@@ -39,9 +52,24 @@ export default function FichajePage() {
     fetchAreas();
   }, []);
 
-  const handleFichar = async (e) => {
+  // Función para formatear fechas y horas de manera consistente con Supabase
+const formatSupabaseDateTime = (date) => {
+  return date.toISOString();
+};
+
+const formatTime = (date) => {
+  return date.toLocaleTimeString('es-ES', { hour12: false });
+};
+
+const formatDate = (date) => {
+  return date.toISOString().split('T')[0];
+};
+
+const handleFichar = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    const now = new Date();
 
     const { error } = await supabase
       .from('fichajes')
@@ -49,8 +77,9 @@ export default function FichajePage() {
         {
           nombre: selectedAlumno,
           equipo: selectedArea,
-          fecha: new Date().toISOString().split('T')[0],
-          hora_entrada: new Date().toLocaleTimeString('es-ES', { hour12: false }),
+          fecha: formatDate(now),
+          hora_entrada: formatTime(now),
+          created_at: formatSupabaseDateTime(now),
           absentismo: false
         }
       ]);
@@ -122,14 +151,16 @@ export default function FichajePage() {
               type="button"
               onClick={async () => {
                 setLoading(true);
+                const now = new Date();
                 const { error } = await supabase
                   .from('fichajes')
                   .insert([
                     {
                       nombre: selectedAlumno,
                       equipo: selectedArea,
-                      fecha: new Date().toISOString().split('T')[0],
-                      hora_entrada: new Date().toLocaleTimeString('es-ES', { hour12: false }),
+                      fecha: formatDate(now),
+                      hora_entrada: formatTime(now),
+                      created_at: formatSupabaseDateTime(now),
                       absentismo: false
                     }
                   ]);
@@ -150,15 +181,18 @@ export default function FichajePage() {
             <button 
               type="button"
               onClick={async () => {
-                const hoy = new Date().toISOString().split('T')[0];
-                const ahora = new Date().toLocaleTimeString('es-ES', { hour12: false });
+                const hoy = formatDate(new Date());
+                const ahora = formatTime(new Date());
                 
                 setLoading(true);
                 
                 // 1. Intentamos actualizar el registro de HOY que esté abierto (hora_salida sea null)
                 const { data, error } = await supabase
                   .from('fichajes')
-                  .update({ hora_salida: ahora })
+                  .update({ 
+                    hora_salida: ahora,
+                    updated_at: formatSupabaseDateTime(new Date())
+                  })
                   .eq('nombre', selectedAlumno)
                   .eq('fecha', hoy)
                   .is('hora_salida', null)
