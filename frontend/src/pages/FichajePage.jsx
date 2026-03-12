@@ -177,8 +177,7 @@ export default function FichajePage() {
                 const { data, error } = await supabase
                   .from('fichajes')
                   .update({ 
-                    hora_salida: ahora,
-                    updated_at: formatSupabaseDateTime(new Date())
+                    hora_salida: ahora
                   })
                   .eq('nombre', selectedAlumno)
                   .eq('fecha', hoy)

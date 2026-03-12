@@ -200,10 +200,6 @@ export default function AdminDashboard() {
       // Only add hora_salida if it's provided
       if (editFormData.hora_salida) {
         updateData.hora_salida = editFormData.hora_salida;
-        const salidaDate = new Date(`${editFormData.fecha}T${editFormData.hora_salida}`);
-        updateData.updated_at = formatSupabaseDateTime(salidaDate);
-      } else {
-        updateData.updated_at = formatSupabaseDateTime(entradaDate);
       }
       
       const { error } = await supabase
