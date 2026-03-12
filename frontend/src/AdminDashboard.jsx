@@ -185,9 +185,10 @@ export default function AdminDashboard() {
     setLoading(true);
     
     try {
-      // Parse the dates to ensure proper formatting
-      const fechaDate = new Date(editFormData.fecha);
-      const entradaDate = new Date(`${editFormData.fecha}T${editFormData.hora_entrada}`);
+      // Ensure we have a valid fichaje ID
+      if (!editingFichaje || !editingFichaje.id) {
+        throw new Error("ID de fichaje no válido");
+      }
       
       const updateData = {
         nombre: editFormData.nombre,
@@ -216,7 +217,39 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error("Error al actualizar fichaje:", error);
-      alert("Error al actualizar el fichaje");
+      alert("Error al actualizar el fichaje: " + error.message);
+    }
+    setLoading(false);
+  };
+
+  // Function to delete a fichaje
+  const deleteFichaje = async (fichajeId) => {
+    if (!fichajeId) {
+      alert("ID de fichaje no válido");
+      return;
+    }
+    
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este fichaje? Esta acción no se puede deshacer.")) {
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase
+        .from('fichajes')
+        .delete()
+        .eq('id', fichajeId);
+      
+      if (error) {
+        alert("Error al eliminar el fichaje: " + error.message);
+      } else {
+        await cargarTodo();
+        alert("Fichaje eliminado correctamente");
+      }
+    } catch (error) {
+      console.error("Error al eliminar fichaje:", error);
+      alert("Error al eliminar el fichaje: " + error.message);
     }
     setLoading(false);
   };
@@ -461,12 +494,20 @@ export default function AdminDashboard() {
                           
                           {/* Columna Acciones */}
                           <td className="py-4 px-2 text-right">
-                            <button
-                              onClick={() => openEditModal(f)}
-                              className="text-orange-500 hover:text-orange-400 font-bold text-sm px-3 py-1 rounded-lg border border-orange-500/30 hover:border-orange-500/50 transition-all"
-                            >
-                              Editar
-                            </button>
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => openEditModal(f)}
+                                className="text-orange-500 hover:text-orange-400 font-bold text-sm px-3 py-1 rounded-lg border border-orange-500/30 hover:border-orange-500/50 transition-all"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                onClick={() => deleteFichaje(f.id)}
+                                className="text-red-500 hover:text-red-400 font-bold text-sm px-3 py-1 rounded-lg border border-red-500/30 hover:border-red-500/50 transition-all"
+                              >
+                                Eliminar
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
