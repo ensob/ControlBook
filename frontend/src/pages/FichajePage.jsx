@@ -52,20 +52,7 @@ export default function FichajePage() {
     fetchAreas();
   }, []);
 
-  // Función para formatear fechas y horas de manera consistente con Supabase
-const formatSupabaseDateTime = (date) => {
-  return date.toISOString();
-};
-
-const formatTime = (date) => {
-  return date.toLocaleTimeString('es-ES', { hour12: false });
-};
-
-const formatDate = (date) => {
-  return date.toISOString().split('T')[0];
-};
-
-const handleFichar = async (e) => {
+  const handleFichar = async (e) => {
     e.preventDefault();
     setLoading(true);
 
